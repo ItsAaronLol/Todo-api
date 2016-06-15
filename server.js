@@ -22,7 +22,17 @@ app.get('/', function(req, res){
 
 // GET /todos
 app.get('/todos', function(req,res){
-	res.json(todos); //convert the todos array into json and sent back to whoever called the api
+	var queryParams = req.query; //the params: ?completed=true
+	var filteredTodos = todos;
+	//_.findWhere returns first value
+	//_.where returns all values
+	if(queryParams.hasOwnProperty('completed') && queryParams.completed === 'true'){
+		filteredTodos = _.where(filteredTodos, {completed: true});
+	} else if (queryParams.hasOwnProperty('completed') && queryParams.completed === 'false'){
+		filteredTodos = _.where(filteredTodos, {completed: false});
+	}
+	
+	res.json(filteredTodos); //convert the todos array into json and sent back to whoever called the api
 });
 
 // GET /todos/:id
@@ -93,8 +103,6 @@ app.put('/todos/:id', function(req,res){
 	if(!matchedTodo){
 		return res.status(404).send();
 	}
-
-
 
 	var body = _.pick(req.body, 'description', 'completed'); 
 	var validAttributes = {};
