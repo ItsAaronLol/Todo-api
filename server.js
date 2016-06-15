@@ -20,7 +20,7 @@ app.get('/', function(req, res){
 	res.send('Todo API Root');
 });
 
-// GET /todos
+// GET /todos?completed=true&q=house
 app.get('/todos', function(req,res){
 	var queryParams = req.query; //the params: ?completed=true
 	var filteredTodos = todos;
@@ -31,7 +31,27 @@ app.get('/todos', function(req,res){
 	} else if (queryParams.hasOwnProperty('completed') && queryParams.completed === 'false'){
 		filteredTodos = _.where(filteredTodos, {completed: false});
 	}
-	
+
+	if(queryParams.hasOwnProperty('q') && queryParams.q.length > 0){
+		filteredTodos = _.filter(filteredTodos, function(todo){ 
+				return todo.description.toLowerCase().indexOf(queryParams.q) > -1; 
+				//todo is returned if it returns true
+		});
+	}
+
+
+
+	//_.filter: Looks through each value in the list, 
+	//returning an array of all the values that pass a 
+	//truth test (predicate).
+
+
+	//"Go to work on Saturday".indexOf('work') //returns -1 if work doesn't exist otherwise return position in string
+	//if greater than -1, it exists
+
+
+
+
 	res.json(filteredTodos); //convert the todos array into json and sent back to whoever called the api
 });
 
