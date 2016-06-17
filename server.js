@@ -23,28 +23,49 @@ app.get('/', function(req, res) {
 
 // GET /todos?completed=true&q=house
 app.get('/todos', function(req, res) {
-	var queryParams = req.query; //the params: ?completed=true
-	var filteredTodos = todos;
-	//_.findWhere returns first value
-	//_.where returns all values
-	if (queryParams.hasOwnProperty('completed') && queryParams.completed === 'true') {
-		filteredTodos = _.where(filteredTodos, {
-			completed: true
-		});
-	} else if (queryParams.hasOwnProperty('completed') && queryParams.completed === 'false') {
-		filteredTodos = _.where(filteredTodos, {
-			completed: false
-		});
+	var query = req.query; //the params: ?completed=true
+	var where = {};
+
+	if(query.hasOwnProperty('completed') && query.completed === 'true'){
+		where.completed = true;
+	} else if (query.hasOwnProperty('completed') && query.completed === 'false'){
+		where.completed = false;
 	}
 
-	if (queryParams.hasOwnProperty('q') && queryParams.q.length > 0) {
-		filteredTodos = _.filter(filteredTodos, function(todo) {
-			return todo.description.toLowerCase().indexOf(queryParams.q) > -1;
-			//todo is returned if it returns true
-		});
+	if(query.hasOwnProperty('q') && query.q.length > 0){
+		where.description = {
+			$like: '%' + query.q + '%'
+		};
 	}
 
+	db.todo.findAll({where: where}).then(function(todos){
+		res.json(todos);
+	}, function(e){
+		res.status(500).send();
+	});
 
+
+	// var filteredTodos = todos;
+	// //_.findWhere returns first value
+	// //_.where returns all values
+	// if (queryParams.hasOwnProperty('completed') && queryParams.completed === 'true') {
+	// 	filteredTodos = _.where(filteredTodos, {
+	// 		completed: true
+	// 	});
+	// } else if (queryParams.hasOwnProperty('completed') && queryParams.completed === 'false') {
+	// 	filteredTodos = _.where(filteredTodos, {
+	// 		completed: false
+	// 	});
+	// }
+
+	// if (queryParams.hasOwnProperty('q') && queryParams.q.length > 0) {
+	// 	filteredTodos = _.filter(filteredTodos, function(todo) {
+	// 		return todo.description.toLowerCase().indexOf(queryParams.q) > -1;
+	// 		//todo is returned if it returns true
+	// 	});
+	// }
+
+	// res.json(filteredTodos); //convert the todos array into json and sent back to whoever called the api
 
 	//_.filter: Looks through each value in the list, 
 	//returning an array of all the values that pass a 
@@ -56,7 +77,7 @@ app.get('/todos', function(req, res) {
 
 
 
-	res.json(filteredTodos); //convert the todos array into json and sent back to whoever called the api
+	
 });
 
 // GET /todos/:id
