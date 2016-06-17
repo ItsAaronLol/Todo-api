@@ -134,18 +134,23 @@ app.delete('/todos/:id', function(req, res) {
 	//remove the todo at the id
 	//use the 'without' underscore method
 	var todoId = parseInt(req.params.id, 10);
-	var matchedTodo = _.findWhere(todos, {
-		id: todoId
+
+	db.todo.destroy({
+		where: {
+			id: todoId
+		}
+	}).then(function(rowsDeleted){
+		if(rowsDeleted === 0){
+			res.status(404).json({
+				error: 'No todo with id'
+			});
+		} else {
+			res.status(204).send();
+		}
+	}, function(){
+
 	});
 
-	if (!matchedTodo) {
-		return res.status(400).json({
-			"error": "no todo found with that id"
-		});
-	} else {
-		todos = _.without(todos, matchedTodo);
-		res.json(matchedTodo);
-	}
 
 });
 
