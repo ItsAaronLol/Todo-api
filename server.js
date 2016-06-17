@@ -26,58 +26,26 @@ app.get('/todos', function(req, res) {
 	var query = req.query; //the params: ?completed=true
 	var where = {};
 
-	if(query.hasOwnProperty('completed') && query.completed === 'true'){
+	if (query.hasOwnProperty('completed') && query.completed === 'true') {
 		where.completed = true;
-	} else if (query.hasOwnProperty('completed') && query.completed === 'false'){
+	} else if (query.hasOwnProperty('completed') && query.completed === 'false') {
 		where.completed = false;
 	}
 
-	if(query.hasOwnProperty('q') && query.q.length > 0){
+	if (query.hasOwnProperty('q') && query.q.length > 0) {
 		where.description = {
 			$like: '%' + query.q + '%'
 		};
 	}
 
-	db.todo.findAll({where: where}).then(function(todos){
+	db.todo.findAll({
+		where: where
+	}).then(function(todos) {
 		res.json(todos);
-	}, function(e){
+	}, function(e) {
 		res.status(500).send();
 	});
 
-
-	// var filteredTodos = todos;
-	// //_.findWhere returns first value
-	// //_.where returns all values
-	// if (queryParams.hasOwnProperty('completed') && queryParams.completed === 'true') {
-	// 	filteredTodos = _.where(filteredTodos, {
-	// 		completed: true
-	// 	});
-	// } else if (queryParams.hasOwnProperty('completed') && queryParams.completed === 'false') {
-	// 	filteredTodos = _.where(filteredTodos, {
-	// 		completed: false
-	// 	});
-	// }
-
-	// if (queryParams.hasOwnProperty('q') && queryParams.q.length > 0) {
-	// 	filteredTodos = _.filter(filteredTodos, function(todo) {
-	// 		return todo.description.toLowerCase().indexOf(queryParams.q) > -1;
-	// 		//todo is returned if it returns true
-	// 	});
-	// }
-
-	// res.json(filteredTodos); //convert the todos array into json and sent back to whoever called the api
-
-	//_.filter: Looks through each value in the list, 
-	//returning an array of all the values that pass a 
-	//truth test (predicate).
-
-
-	//"Go to work on Saturday".indexOf('work') //returns -1 if work doesn't exist otherwise return position in string
-	//if greater than -1, it exists
-
-
-
-	
 });
 
 // GET /todos/:id
@@ -93,7 +61,7 @@ app.get('/todos/:id', function(req, res) {
 	}, function(e) {
 		res.status(500).send();
 	});
-	
+
 });
 
 // POST /todos
@@ -101,32 +69,12 @@ app.post('/todos', function(req, res) {
 
 	var body = _.pick(req.body, 'description', 'completed');
 
-	db.todo.create(body).then(function(todo){
+	db.todo.create(body).then(function(todo) {
 		res.json(todo.toJSON());
-	}, function (e){
+	}, function(e) {
 		res.status(400).json(e);
 	});
-	//call create on db.todo
-	//	respond with 200 and value of todo object
-	//  error: e res.json(e)
 
-
-	// if(typeof body.completed !== 'boolean' || typeof body.description !== 'string' || body.description.trim().length === 0){
-	// 	return res.status(400).send();
-	// }
-
-
-	// if (!_.isBoolean(body.completed) || !_.isString(body.description) || body.description.trim().length === 0) {
-	// 	return res.status(400).send();
-	// }
-
-	// body.description = body.description.trim();
-	// body.id = todoNextId++;
-
-	// todos.push(body);
-
-
-	// res.json(body);
 });
 
 // DELETE /todos/:id
@@ -139,15 +87,15 @@ app.delete('/todos/:id', function(req, res) {
 		where: {
 			id: todoId
 		}
-	}).then(function(rowsDeleted){
-		if(rowsDeleted === 0){
+	}).then(function(rowsDeleted) {
+		if (rowsDeleted === 0) {
 			res.status(404).json({
 				error: 'No todo with id'
 			});
 		} else {
 			res.status(204).send();
 		}
-	}, function(){
+	}, function() {
 
 	});
 
@@ -158,35 +106,34 @@ app.delete('/todos/:id', function(req, res) {
 app.put('/todos/:id', function(req, res) {
 	//get the body with only the description and completed fields
 	var todoId = parseInt(req.params.id, 10);
-	var matchedTodo = _.findWhere(todos, {
-		id: todoId
-	});
-
-	if (!matchedTodo) {
-		return res.status(404).send();
-	}
-
 	var body = _.pick(req.body, 'description', 'completed');
-	var validAttributes = {};
+	var attributes = {};
 
-	if (body.hasOwnProperty('completed') && _.isBoolean(body.completed)) {
-		validAttributes.completed = body.completed;
-	} else if (body.hasOwnProperty('completed')) {
-		return res.status(400).send();
+	if (body.hasOwnProperty('completed')) {
+		attributes.completed = body.completed;
 	}
 
-	if (body.hasOwnProperty('description') && _.isString(body.description) && body.description.trim().length > 0) {
-		validAttributes.description = body.description;
-	} else if (body.hasOwnProperty('description')) {
-		return res.status(400).send();
+	if (body.hasOwnProperty('description')) {
+		attributes.description = body.description;
 	}
 
-	_.extend(matchedTodo, validAttributes); //override matchedtodo with the valid attributes
-	res.json(matchedTodo);
+	db.todo.findById(todoId).then(function(todo) {
+		if (todo) {
+			todo.update(attributes).then(function(todo) {
+				res.json(todo.toJSON());
+			}, function(e) {
+				res.status(400).json(e);
+			});
+		} else {
+			res.status(404).send(); //nothing to update
+		}
+	}, function() {
+		res.status(500).send();
+	});
 
 	//returns true if it has a completed property
 	//body.hasOwnProperty('completed')
-})
+});
 
 db.sequelize.sync().then(function() {
 	app.listen(PORT, function() {
