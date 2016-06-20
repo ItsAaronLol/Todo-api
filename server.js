@@ -3,11 +3,14 @@ var bodyParser = require('body-parser');
 var _ = require('underscore');
 var db = require('./db.js');
 var bcrypt = require('bcryptjs');
+var middleware = require('./middleware.js')(db);
 
 var app = express();
 var PORT = process.env.PORT || 3000;
 var todos = [];
 var todoNextId = 1;
+
+
 
 //a todo is our model
 //a set of todos is called a todo collection
@@ -23,7 +26,7 @@ app.get('/', function(req, res) {
 });
 
 // GET /todos?completed=true&q=house
-app.get('/todos', function(req, res) {
+app.get('/todos', middleware.requireAuthentication,function(req, res) {
 	var query = req.query; //the params: ?completed=true
 	var where = {};
 
@@ -50,7 +53,7 @@ app.get('/todos', function(req, res) {
 });
 
 // GET /todos/:id
-app.get('/todos/:id', function(req, res) {
+app.get('/todos/:id', middleware.requireAuthentication, function(req, res) {
 	var todoId = parseInt(req.params.id, 10); //req.params.id is always a string
 
 	db.todo.findById(todoId).then(function(todo) {
@@ -66,7 +69,7 @@ app.get('/todos/:id', function(req, res) {
 });
 
 // POST /todos
-app.post('/todos', function(req, res) {
+app.post('/todos', middleware.requireAuthentication, function(req, res) {
 
 	var body = _.pick(req.body, 'description', 'completed');
 
@@ -80,7 +83,7 @@ app.post('/todos', function(req, res) {
 
 
 // DELETE /todos/:id
-app.delete('/todos/:id', function(req, res) {
+app.delete('/todos/:id', middleware.requireAuthentication, function(req, res) {
 	//remove the todo at the id
 	//use the 'without' underscore method
 	var todoId = parseInt(req.params.id, 10);
@@ -105,7 +108,7 @@ app.delete('/todos/:id', function(req, res) {
 });
 
 // PUT /todos/:id
-app.put('/todos/:id', function(req, res) {
+app.put('/todos/:id', middleware.requireAuthentication, function(req, res) {
 	//get the body with only the description and completed fields
 	var todoId = parseInt(req.params.id, 10);
 	var body = _.pick(req.body, 'description', 'completed');
