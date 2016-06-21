@@ -19,70 +19,44 @@ var Todo = sequelize.define('todo', {
 		allowNull: false,
 		defaultValue: false
 	}
-})
+});
+
+var User = sequelize.define('user', {
+	email: Sequelize.STRING	
+
+	// email: {
+	// 	type: Sequelize.STRING
+	// }
+});
+//belongsto takes the model that the todo belongs to
+Todo.belongsTo(User);
+User.hasMany(Todo);
+
 //force:true automatically drops all tables in database and recreates them
 sequelize.sync({
-
-	// force:true
+	 //force:true
 }).then(function(){
-	return Todo.findById(3)
-	.then(function(todo){//todo is the content inside the resolve statement
-		if(todo){ //if the todo item exists
-			console.log(todo.toJSON());
-		} else {
-			console.log('Todo not found');
-		}
+	User.findById(1).then(function(user){
+		user.getTodos({
+			where: {
+				completed: false
+			}
+		}).then(function(todos){ //getTodos takes the exact snytax as findone findall
+			todos.forEach(function (todo){
+				console.log(todo.toJSON());
+			});
+		});
 	});
-
-	/* 
-
-	Promise {
-  _bitField: 131072,
-  _fulfillmentHandler0: undefined,
-  _rejectionHandler0: undefined,
-  _progressHandler0: undefined,
-  _promise0: undefined,
-  _receiver0: undefined,
-  _settledValue: undefined,
-  _boundTo: todo }
-
-
-	*/
-
-
-
-	//fetch todo item by id
-	//if find, print to screen using toJSON
-	//if not, print to screen using error message saying todo not found
-
-	// console.log('Everything is synced');
-
-	// Todo.create({
-	// 	description: 'Take out trash'
-	// }).then(function(todo){
-	// 	return Todo.create({
-	// 		description: 'Clean office'
-	// 	});
+	// User.create({
+	// 	email: 'andrew@example.com'
 	// }).then(function(){
-	// 	//return Todo.findById(1);
-	// 	return Todo.findAll({
-	// 		where:{
-	// 			description: {
-	// 				$like: '%trash%'
-	// 				//$like lets you look for a word inside attribute
-	// 			}
-	// 		}
+	// 	return Todo.create({
+	// 		description:'Clean yard'
 	// 	});
-	// }).then(function(todos){
-	// 	if(todos){
-	// 		todos.forEach(function(todo){
-	// 			console.log(todo.toJSON());
-	// 		});
-	// 	} else {
-	// 		console.log('no todo found!');
-	// 	}
-	// }).catch(function(e){
-	// 	console.log(e);
-	// });
-})
+	// }).then(function(todo){
+	// 	User.findById(1).then(function(user){
+	// 		user.addTodo(todo);
+	// 	})
+	// })
+});
 

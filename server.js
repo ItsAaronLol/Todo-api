@@ -69,12 +69,24 @@ app.get('/todos/:id', middleware.requireAuthentication, function(req, res) {
 });
 
 // POST /todos
+//middleware is called before the function
 app.post('/todos', middleware.requireAuthentication, function(req, res) {
 
+	//middleware.requireAuthentication makes req.user equal to the user with the corresponding AUTH value
+
+	//make body equal to the value in the request body, only include description and completed fields
+	//the request body is a javascript object
 	var body = _.pick(req.body, 'description', 'completed');
 
+	//create the new todo using this new object
 	db.todo.create(body).then(function(todo) {
-		res.json(todo.toJSON());
+		//get the corresponding user and addtodo to it
+		req.user.addTodo(todo).then(function() {
+			//if successful, update the object with current data from the DB and return the same object.
+			return todo.reload();
+		}).then(function(todo){ 
+			res.json(todo.toJSON());
+		});
 	}, function(e) {
 		res.status(400).json(e);
 	});
